@@ -1,90 +1,76 @@
 /**
- * A Dietitian: plans clinical nutrition. Neither prescribes nor runs
- * diagnostic tests, which is why those abilities are interfaces rather
- * than methods on the base class.
- *
- * @author kwu
- * @version 3.0
+ * Dietitian class representing a nutrition therapist who neither prescribes nor
+ * performs clinical diagnostics, illustrating interface segregation.
  */
 public class Dietitian extends HealthProfessional {
+
+    public static final String DEFAULT_DEPARTMENT = "Clinical Nutrition";
+    public static final String DEFAULT_PROFILE = "Accredited practising dietitian.";
+    public static final String DEFAULT_NUTRITION_FOCUS = "General nutrition";
 
     private String accreditationNumber;
     private String nutritionFocus;
 
-    /**
-     * Creates a dietitian with every detail specified.
-     *
-     * @param id                  positive staff ID
-     * @param name                full name
-     * @param profile             biography and expertise
-     * @param workingDays         weekdays worked
-     * @param shiftStart          first bookable slot
-     * @param shiftEnd            last bookable slot
-     * @param accreditationNumber professional accreditation number
-     * @param nutritionFocus      area of nutrition therapy
+    /*
+     * Creates a Dietitian with full schedule, accreditation number and
+     * nutrition therapy focus validated.
      */
-    public Dietitian(int id, String name, String profile, String[] workingDays,
+    public Dietitian(int id, String name, String gender, String profile, String[] workingDays,
                      String shiftStart, String shiftEnd,
                      String accreditationNumber, String nutritionFocus) {
-        super(id, name, "Clinical Nutrition", profile, workingDays, shiftStart, shiftEnd);
+        super(id, name, gender, DEFAULT_DEPARTMENT, profile, workingDays, shiftStart, shiftEnd);
         this.accreditationNumber = requireText(accreditationNumber, "Accreditation number");
         this.nutritionFocus = requireText(nutritionFocus, "Nutrition focus");
     }
 
-    /**
-     * Creates a general clinical dietitian on the default weekday shift.
-     *
-     * @param id                  positive staff ID
-     * @param name                full name
-     * @param accreditationNumber professional accreditation number
-     */
-    public Dietitian(int id, String name, String accreditationNumber) {
-        this(id, name, "Accredited practising dietitian.", DEFAULT_WORKING_DAYS,
-                DEFAULT_SHIFT_START, DEFAULT_SHIFT_END, accreditationNumber, "General nutrition");
+    // Creates a general clinical dietitian on the default weekday shift
+    public Dietitian(int id, String name, String gender, String accreditationNumber) {
+        this(id, name, gender, DEFAULT_PROFILE, DEFAULT_WORKING_DAYS,
+                DEFAULT_SHIFT_START, DEFAULT_SHIFT_END, accreditationNumber, DEFAULT_NUTRITION_FOCUS);
     }
 
+    // Returns the concrete specialty title
     @Override
     public String getProfessionalType() {
         return "Dietitian";
     }
 
+    // Returns the dietetics clinical duty summary
     @Override
     public String getClinicalRole() {
         return "Nutrition assessment and personalised meal planning";
     }
 
-    /** @return the accreditation number */
+    // Returns the dietitian's professional accreditation number
     public String getAccreditationNumber() {
         return accreditationNumber;
     }
 
-    /** @param accreditationNumber the new accreditation number */
+    // Updates the accreditation number after blank-text validation
     public void setAccreditationNumber(String accreditationNumber) {
         this.accreditationNumber = requireText(accreditationNumber, "Accreditation number");
     }
 
-    /** @return the nutrition focus */
+    // Returns the area of nutrition therapy focus
     public String getNutritionFocus() {
         return nutritionFocus;
     }
 
-    /** @param nutritionFocus the new nutrition focus */
+    // Updates the nutrition focus after blank-text validation
     public void setNutritionFocus(String nutritionFocus) {
         this.nutritionFocus = requireText(nutritionFocus, "Nutrition focus");
     }
 
-    /**
-     * Creates a daily meal plan.
-     *
-     * @param patientName   the patient's name
-     * @param dailyCalories target calories per day
-     * @return a description of the plan
+    /*
+     * Dietitian-specific action: builds a daily calorie meal plan tailored to
+     * this dietitian's clinical nutrition focus.
      */
     public String createMealPlan(String patientName, int dailyCalories) {
         return getName() + " created a " + dailyCalories + " kcal/day "
                 + nutritionFocus + " plan for " + patientName + ".";
     }
 
+    // Appends accreditation and nutrition focus fields to the base clinician summary
     @Override
     public String toString() {
         return super.toString()

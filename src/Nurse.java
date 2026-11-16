@@ -1,83 +1,69 @@
 /**
- * A Nurse: provides triage and collects blood samples. Diagnostic work is
- * shared with doctors, but nurses cannot prescribe.
- *
- * @author kwu
- * @version 3.0
+ * Nurse class representing a registered clinical nurse who performs triage and
+ * diagnostic checks while excluding prescribing authority.
  */
 public class Nurse extends HealthProfessional implements DiagnosticCapable {
+
+    public static final String DEFAULT_DEPARTMENT = "Nursing";
+    public static final String DEFAULT_PROFILE = "Registered clinical nurse.";
+    public static final boolean DEFAULT_PHLEBOTOMY_CERTIFIED = true;
 
     private String ward;
     private boolean phlebotomyCertified;
 
-    /**
-     * Creates a nurse with every detail specified.
-     *
-     * @param id                  positive staff ID
-     * @param name                full name
-     * @param profile             biography and expertise
-     * @param workingDays         weekdays worked
-     * @param shiftStart          first bookable slot
-     * @param shiftEnd            last bookable slot
-     * @param ward                assigned ward
-     * @param phlebotomyCertified whether certified to take blood
+    /*
+     * Creates a Nurse with full schedule, assigned ward and phlebotomy
+     * certification flag validated.
      */
-    public Nurse(int id, String name, String profile, String[] workingDays,
+    public Nurse(int id, String name, String gender, String profile, String[] workingDays,
                  String shiftStart, String shiftEnd,
                  String ward, boolean phlebotomyCertified) {
-        super(id, name, "Nursing", profile, workingDays, shiftStart, shiftEnd);
+        super(id, name, gender, DEFAULT_DEPARTMENT, profile, workingDays, shiftStart, shiftEnd);
         this.ward = requireText(ward, "Ward");
         this.phlebotomyCertified = phlebotomyCertified;
     }
 
-    /**
-     * Creates a blood-certified nurse on the default weekday shift.
-     *
-     * @param id   positive staff ID
-     * @param name full name
-     * @param ward assigned ward
-     */
-    public Nurse(int id, String name, String ward) {
-        this(id, name, "Registered nurse in " + ward + ".", DEFAULT_WORKING_DAYS,
-                DEFAULT_SHIFT_START, DEFAULT_SHIFT_END, ward, true);
+    // Creates a phlebotomy-certified nurse on the default weekday shift
+    public Nurse(int id, String name, String gender, String ward) {
+        this(id, name, gender, DEFAULT_PROFILE, DEFAULT_WORKING_DAYS,
+                DEFAULT_SHIFT_START, DEFAULT_SHIFT_END, ward, DEFAULT_PHLEBOTOMY_CERTIFIED);
     }
 
+    // Returns the concrete specialty title
     @Override
     public String getProfessionalType() {
         return "Nurse";
     }
 
+    // Returns the nursing clinical duty summary
     @Override
     public String getClinicalRole() {
         return "Triage, vital signs, wound care and blood collection";
     }
 
-    /** @return the assigned ward */
+    // Returns the assigned hospital or clinic ward
     public String getWard() {
         return ward;
     }
 
-    /** @param ward the new ward */
+    // Updates the assigned ward after blank-text validation
     public void setWard(String ward) {
         this.ward = requireText(ward, "Ward");
     }
 
-    /** @return true if certified to take blood */
+    // Returns true if the nurse is certified to draw blood
     public boolean isPhlebotomyCertified() {
         return phlebotomyCertified;
     }
 
-    /** @param phlebotomyCertified whether certified to take blood */
+    // Updates phlebotomy certification status
     public void setPhlebotomyCertified(boolean phlebotomyCertified) {
         this.phlebotomyCertified = phlebotomyCertified;
     }
 
-    /**
-     * Takes blood samples, if certified.
-     *
-     * @param patientName the patient's name
-     * @param vials       number of vials
-     * @return a description of what happened
+    /*
+     * Nurse-specific action: collects blood vials only when the nurse holds
+     * active phlebotomy certification.
      */
     public String takeBloodSample(String patientName, int vials) {
         if (!phlebotomyCertified) {
@@ -86,11 +72,26 @@ public class Nurse extends HealthProfessional implements DiagnosticCapable {
         return getName() + " took " + vials + " blood vial(s) from " + patientName + ".";
     }
 
+    // Triages the patient and records vital signs
     @Override
     public String performDiagnostic(String patientName) {
-        return getName() + " (Nurse) triaged " + patientName + " and checked vital signs.";
+        return getName() + " (Nurse) triaged " + requireText(patientName, "Patient name")
+                + " and checked vital signs.";
     }
 
+    // Returns nursing diagnostic equipment based on phlebotomy certification
+    @Override
+    public String getDiagnosticEquipment() {
+        return phlebotomyCertified ? "Vital signs monitor and venepuncture kit" : "Vital signs monitor";
+    }
+
+    // Returns 20 minutes for urgent nursing triage or 60 minutes for routine checks
+    @Override
+    public int estimateTurnaroundMinutes(boolean isUrgent) {
+        return isUrgent ? 20 : 60;
+    }
+
+    // Appends ward and certification fields to the base clinician summary
     @Override
     public String toString() {
         return super.toString()

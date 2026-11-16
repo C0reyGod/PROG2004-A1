@@ -1,95 +1,95 @@
 /**
- * A Radiologist: performs and reports on medical imaging. Diagnoses through
- * scans but does not prescribe.
- *
- * @author kwu
- * @version 3.0
+ * Radiologist class representing a medical imaging specialist who performs
+ * diagnostic scans without prescribing privileges.
  */
 public class Radiologist extends HealthProfessional implements DiagnosticCapable {
+
+    public static final String DEFAULT_DEPARTMENT = "Radiology";
+    public static final String DEFAULT_PROFILE = "Diagnostic imaging specialist.";
+    public static final String DEFAULT_IMAGING_SUITE = "R1";
 
     private String imagingModality;
     private String imagingSuite;
 
-    /**
-     * Creates a radiologist with every detail specified.
-     *
-     * @param id              positive staff ID
-     * @param name            full name
-     * @param profile         biography and expertise
-     * @param workingDays     weekdays worked
-     * @param shiftStart      first bookable slot
-     * @param shiftEnd        last bookable slot
-     * @param imagingModality main imaging type, e.g. MRI
-     * @param imagingSuite    assigned imaging suite
+    /*
+     * Creates a Radiologist with full schedule, imaging modality and suite
+     * identifier validated.
      */
-    public Radiologist(int id, String name, String profile, String[] workingDays,
+    public Radiologist(int id, String name, String gender, String profile, String[] workingDays,
                        String shiftStart, String shiftEnd,
                        String imagingModality, String imagingSuite) {
-        super(id, name, "Radiology", profile, workingDays, shiftStart, shiftEnd);
+        super(id, name, gender, DEFAULT_DEPARTMENT, profile, workingDays, shiftStart, shiftEnd);
         this.imagingModality = requireText(imagingModality, "Imaging modality");
         this.imagingSuite = requireText(imagingSuite, "Imaging suite");
     }
 
-    /**
-     * Creates a radiologist on the default weekday shift in suite R1.
-     *
-     * @param id              positive staff ID
-     * @param name            full name
-     * @param imagingModality main imaging type
-     */
-    public Radiologist(int id, String name, String imagingModality) {
-        this(id, name, "Diagnostic radiologist using " + imagingModality + ".", DEFAULT_WORKING_DAYS,
-                DEFAULT_SHIFT_START, DEFAULT_SHIFT_END, imagingModality, "R1");
+    // Creates a Radiologist on the default weekday shift in suite R1
+    public Radiologist(int id, String name, String gender, String imagingModality) {
+        this(id, name, gender, DEFAULT_PROFILE, DEFAULT_WORKING_DAYS,
+                DEFAULT_SHIFT_START, DEFAULT_SHIFT_END, imagingModality, DEFAULT_IMAGING_SUITE);
     }
 
+    // Returns the concrete specialty title
     @Override
     public String getProfessionalType() {
         return "Radiologist";
     }
 
+    // Returns the radiology clinical duty summary
     @Override
     public String getClinicalRole() {
         return "Medical imaging and radiology reporting";
     }
 
-    /** @return the imaging modality */
+    // Returns the main imaging modality
     public String getImagingModality() {
         return imagingModality;
     }
 
-    /** @param imagingModality the new imaging modality */
+    // Updates the imaging modality after blank-text validation
     public void setImagingModality(String imagingModality) {
         this.imagingModality = requireText(imagingModality, "Imaging modality");
     }
 
-    /** @return the imaging suite */
+    // Returns the assigned imaging suite
     public String getImagingSuite() {
         return imagingSuite;
     }
 
-    /** @param imagingSuite the new imaging suite */
+    // Updates the assigned imaging suite after blank-text validation
     public void setImagingSuite(String imagingSuite) {
         this.imagingSuite = requireText(imagingSuite, "Imaging suite");
     }
 
-    /**
-     * Writes an imaging report for one body region.
-     *
-     * @param patientName the patient's name
-     * @param bodyRegion  the region scanned
-     * @return a description of the report
+    /*
+     * Radiologist-specific action: writes a scan report for a specific body
+     * region and returns the summary note.
      */
     public String writeImagingReport(String patientName, String bodyRegion) {
         return getName() + " reported the " + imagingModality + " scan of "
                 + patientName + "'s " + bodyRegion + ".";
     }
 
+    // Runs an imaging scan in the assigned suite after validating patientName
     @Override
     public String performDiagnostic(String patientName) {
         return getName() + " (Radiologist) performed a " + imagingModality + " scan on "
-                + patientName + " in suite " + imagingSuite + ".";
+                + requireText(patientName, "Patient name") + " in suite " + imagingSuite + ".";
     }
 
+    // Returns the scanner description including modality and suite
+    @Override
+    public String getDiagnosticEquipment() {
+        return imagingModality + " scanner (Suite " + imagingSuite + ")";
+    }
+
+    // Returns 45 minutes for urgent imaging reports or 120 minutes for routine scans
+    @Override
+    public int estimateTurnaroundMinutes(boolean isUrgent) {
+        return isUrgent ? 45 : ROUTINE_TURNAROUND_MINUTES;
+    }
+
+    // Appends modality and suite fields to the base clinician summary
     @Override
     public String toString() {
         return super.toString()
