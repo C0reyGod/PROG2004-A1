@@ -1,67 +1,61 @@
+/*
+ * File: Patient.java
+ * Models a clinic patient with input validation and linked appointments.
+ */
 import java.util.ArrayList;
 import java.util.Objects;
 
 /**
- * A patient of the clinic. Kept as its own class (rather than loose strings
- * inside Appointment) so patient details and their checks live in one place.
- *
- * @author kwu
- * @version 3.0
+ * A clinic patient with validated details and a list of current bookings.
  */
 public class Patient {
 
     public static final int MIN_AGE = 1;
     public static final int MAX_AGE = 120;
+    public static final String DEFAULT_GENDER = "Not specified";
+
+    private static final String[] VALID_GENDERS = {"Male", "Female", "Other", DEFAULT_GENDER};
 
     private String patientId;
     private String name;
+    private String gender;
     private int age;
     private String mobilePhone;
     private String conditionDescription;
     private ArrayList<Appointment> appointments = new ArrayList<>();
 
-    /**
-     * Creates a placeholder patient with safe default values.
-     */
+    // Creates a placeholder patient with safe minimum defaults
     public Patient() {
-        this("UNKNOWN", "Unknown Patient", MIN_AGE, "00000000", "Not specified");
+        this("UNKNOWN", "Unknown Patient", DEFAULT_GENDER, MIN_AGE, "00000000", "Not specified");
     }
 
-    /**
-     * Creates a patient. Invalid values are rejected at the door.
-     *
-     * @param patientId            ID card or patient number
-     * @param name                 full name
-     * @param age                  age in years, 1 to 120
-     * @param mobilePhone          mobile number, 8 to 15 digits
-     * @param conditionDescription symptoms or reason for the visit
-     * @throws IllegalArgumentException if any value is invalid
+    /*
+     * Creates a validated patient record after checking ID, name, gender,
+     * age range, mobile number digits and symptoms text.
      */
-    public Patient(String patientId, String name, int age,
+    public Patient(String patientId, String name, String gender, int age,
                    String mobilePhone, String conditionDescription) {
         this.patientId = requireText(patientId, "Patient ID");
         this.name = requireText(name, "Patient name");
+        this.gender = requireGender(gender);
         this.age = requireAge(age);
         this.mobilePhone = requirePhone(mobilePhone);
         this.conditionDescription = requireText(conditionDescription, "Condition description");
     }
 
-    /**
-     * Checks an age.
-     *
-     * @param age the age to check
-     * @return true if between 1 and 120
-     */
+    // Checks whether an age falls within the accepted 1-120 range
     public static boolean isValidAge(int age) {
         return age >= MIN_AGE && age <= MAX_AGE;
     }
 
-    /**
-     * Checks a mobile number. Stored as a String, not an int, so leading
-     * zeros such as "04..." are kept.
-     *
-     * @param phone the number to check
-     * @return true if it has 8 to 15 digits and nothing else
+    // Checks whether a gender matches one of the accepted clinic options
+    public static boolean isValidGender(String gender) {
+        return matchGender(gender) != null;
+    }
+
+    /*
+     * Checks that a mobile number contains 8 to 15 numeric digits. Stored as
+     * a String rather than int so leading zeros (such as "04...") stay intact.
      */
     public static boolean isValidPhone(String phone) {
         if (phone == null || phone.trim().length() < 8 || phone.trim().length() > 15) {
@@ -76,6 +70,7 @@ public class Patient {
         return true;
     }
 
+    // Rejects null or blank text and returns the trimmed string
     private static String requireText(String value, String fieldName) {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException(fieldName + " cannot be empty.");
@@ -83,6 +78,31 @@ public class Patient {
         return value.trim();
     }
 
+    // Validates and returns a canonical gender label shared by patients and staff
+    public static String requireGender(String gender) {
+        String matched = matchGender(gender);
+        if (matched == null) {
+            throw new IllegalArgumentException(
+                    "Gender must be Male, Female, Other or Not specified: " + gender);
+        }
+        return matched;
+    }
+
+    // Matches gender case-insensitively against VALID_GENDERS or returns null
+    private static String matchGender(String gender) {
+        if (gender == null || gender.trim().isEmpty()) {
+            return null;
+        }
+        String cleaned = gender.trim();
+        for (String valid : VALID_GENDERS) {
+            if (valid.equalsIgnoreCase(cleaned)) {
+                return valid;
+            }
+        }
+        return null;
+    }
+
+    // Validates and returns age, throwing if outside 1-120
     private static int requireAge(int age) {
         if (!isValidAge(age)) {
             throw new IllegalArgumentException("Age must be " + MIN_AGE + " to " + MAX_AGE + ": " + age);
@@ -90,6 +110,7 @@ public class Patient {
         return age;
     }
 
+    // Validates and returns a trimmed 8-15 digit phone number
     private static String requirePhone(String phone) {
         if (!isValidPhone(phone)) {
             throw new IllegalArgumentException("Mobile phone must be 8-15 digits: " + phone);
@@ -97,94 +118,106 @@ public class Patient {
         return phone.trim();
     }
 
-    /** @return the ID card or patient number */
+    // Returns the ID card or patient number
     public String getPatientId() {
         return patientId;
     }
 
-    /** @param patientId the new ID card or patient number */
+    // Updates the ID card or patient number
     public void setPatientId(String patientId) {
         this.patientId = requireText(patientId, "Patient ID");
     }
 
-    /** @return the full name */
+    // Returns the patient's full name
     public String getName() {
         return name;
     }
 
-    /** @param name the new full name */
+    // Updates the patient's full name
     public void setName(String name) {
         this.name = requireText(name, "Patient name");
     }
 
-    /** @return the age in years */
+    // Returns the patient's gender
+    public String getGender() {
+        return gender;
+    }
+
+    // Updates the patient's gender after validation
+    public void setGender(String gender) {
+        this.gender = requireGender(gender);
+    }
+
+    // Returns the patient's age in years
     public int getAge() {
         return age;
     }
 
-    /** @param age the new age, 1 to 120 */
+    // Updates the patient's age after range validation
     public void setAge(int age) {
         this.age = requireAge(age);
     }
 
-    /** @return the mobile number */
+    // Returns the mobile phone number
     public String getMobilePhone() {
         return mobilePhone;
     }
 
-    /** @param mobilePhone the new mobile number, 8 to 15 digits */
+    // Updates the mobile phone number after digit validation
     public void setMobilePhone(String mobilePhone) {
         this.mobilePhone = requirePhone(mobilePhone);
     }
 
-    /** @return the symptoms or reason for the visit */
+    // Returns the patient's symptom or visit description
     public String getConditionDescription() {
         return conditionDescription;
     }
 
-    /** @param conditionDescription the new symptoms or reason for the visit */
+    // Updates the symptom or visit description
     public void setConditionDescription(String conditionDescription) {
         this.conditionDescription = requireText(conditionDescription, "Condition description");
     }
 
-    /** @return a copy of this patient's booked appointments */
+    // Returns a defensive copy of this patient's booked appointments
     public ArrayList<Appointment> getAppointments() {
         return new ArrayList<>(appointments);
     }
 
-    /** @param appointment a newly booked appointment to link to this patient */
+    // Links a newly created appointment to this patient
     public void addAppointment(Appointment appointment) {
         appointments.add(appointment);
     }
 
-    /** @param appointment a cancelled appointment to unlink from this patient */
+    // Unlinks a cancelled appointment from this patient
     public void removeAppointment(Appointment appointment) {
         appointments.remove(appointment);
     }
 
-    /** @return true if the patient has at least one booking */
+    // Returns true if the patient currently has at least one booking
     public boolean hasAppointments() {
         return !appointments.isEmpty();
     }
 
-    /** Prints every field of this patient, one per line. */
+    // Prints all patient fields framed by single separator lines
     public void displayPatientInfo() {
         System.out.println(Display.LINE);
         System.out.print(this);
         System.out.println(Display.LINE);
     }
 
+    // Formats all patient attributes into aligned key-value rows
     @Override
     public String toString() {
         return Display.field("Patient ID / ID Card", patientId)
                 + Display.field("Patient Name", name)
+                + Display.field("Gender", gender)
                 + Display.field("Age", age)
                 + Display.field("Mobile Phone", mobilePhone)
                 + Display.field("Condition / Symptoms", conditionDescription)
                 + Display.field("Booked Appointments", appointments.size());
     }
 
-    /** Patients are identified by mobile number, which is how the clinic looks them up. */
+    // Patients are matched by mobile number so returning patients retain existing bookings
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -196,6 +229,7 @@ public class Patient {
         return mobilePhone.equals(((Patient) o).mobilePhone);
     }
 
+    // Hashes on mobilePhone to stay consistent with equals()
     @Override
     public int hashCode() {
         return Objects.hash(mobilePhone);
