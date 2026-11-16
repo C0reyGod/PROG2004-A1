@@ -1,83 +1,70 @@
 /**
- * A Cardiologist: diagnoses and treats heart conditions, so it can both
- * prescribe and run diagnostic tests.
- *
- * @author kwu
- * @version 3.0
+ * Cardiologist class representing a heart specialist who implements both
+ * Prescribable and DiagnosticCapable contracts.
  */
 public class Cardiologist extends HealthProfessional implements Prescribable, DiagnosticCapable {
+
+    public static final String DEFAULT_DEPARTMENT = "Cardiology";
+    public static final String DEFAULT_PROFILE = "Cardiovascular specialist.";
+    public static final String DEFAULT_DIAGNOSTIC_DEVICE = "12-lead ECG";
+    public static final int DEFAULT_CARDIAC_SUPPLY_DAYS = 90;
 
     private String subSpecialty;
     private String diagnosticDevice;
 
-    /**
-     * Creates a cardiologist with every detail specified.
-     *
-     * @param id               positive staff ID
-     * @param name             full name
-     * @param profile          biography and expertise
-     * @param workingDays      weekdays worked
-     * @param shiftStart       first bookable slot
-     * @param shiftEnd         last bookable slot
-     * @param subSpecialty     cardiac sub-specialty
-     * @param diagnosticDevice main diagnostic device
+    /*
+     * Creates a Cardiologist with full schedule, cardiac sub-specialty and
+     * primary diagnostic device details validated.
      */
-    public Cardiologist(int id, String name, String profile, String[] workingDays,
+    public Cardiologist(int id, String name, String gender, String profile, String[] workingDays,
                         String shiftStart, String shiftEnd,
                         String subSpecialty, String diagnosticDevice) {
-        super(id, name, "Cardiology", profile, workingDays, shiftStart, shiftEnd);
+        super(id, name, gender, DEFAULT_DEPARTMENT, profile, workingDays, shiftStart, shiftEnd);
         this.subSpecialty = requireText(subSpecialty, "Sub-specialty");
         this.diagnosticDevice = requireText(diagnosticDevice, "Diagnostic device");
     }
 
-    /**
-     * Creates a cardiologist on the default weekday shift using an ECG.
-     *
-     * @param id           positive staff ID
-     * @param name         full name
-     * @param subSpecialty cardiac sub-specialty
-     */
-    public Cardiologist(int id, String name, String subSpecialty) {
-        this(id, name, "Heart specialist in " + subSpecialty + ".", DEFAULT_WORKING_DAYS,
-                DEFAULT_SHIFT_START, DEFAULT_SHIFT_END, subSpecialty, "12-lead ECG");
+    // Creates a Cardiologist on the default weekday shift equipped with a 12-lead ECG
+    public Cardiologist(int id, String name, String gender, String subSpecialty) {
+        this(id, name, gender, DEFAULT_PROFILE, DEFAULT_WORKING_DAYS,
+                DEFAULT_SHIFT_START, DEFAULT_SHIFT_END, subSpecialty, DEFAULT_DIAGNOSTIC_DEVICE);
     }
 
+    // Returns the concrete specialty title
     @Override
     public String getProfessionalType() {
         return "Cardiologist";
     }
 
+    // Returns the cardiology clinical duty summary
     @Override
     public String getClinicalRole() {
         return "Heart disease diagnosis, ECG interpretation and rhythm management";
     }
 
-    /** @return the cardiac sub-specialty */
+    // Returns the cardiac sub-specialty
     public String getSubSpecialty() {
         return subSpecialty;
     }
 
-    /** @param subSpecialty the new cardiac sub-specialty */
+    // Updates the cardiac sub-specialty after blank-text validation
     public void setSubSpecialty(String subSpecialty) {
         this.subSpecialty = requireText(subSpecialty, "Sub-specialty");
     }
 
-    /** @return the main diagnostic device */
+    // Returns the main cardiac diagnostic device
     public String getDiagnosticDevice() {
         return diagnosticDevice;
     }
 
-    /** @param diagnosticDevice the new diagnostic device */
+    // Updates the main cardiac diagnostic device after blank-text validation
     public void setDiagnosticDevice(String diagnosticDevice) {
         this.diagnosticDevice = requireText(diagnosticDevice, "Diagnostic device");
     }
 
-    /**
-     * Classifies a resting heart rate.
-     *
-     * @param patientName  the patient's name
-     * @param beatsPerMinute the measured heart rate
-     * @return the assessment
+    /*
+     * Cardiologist-specific action: classifies a patient's resting heart rate
+     * as bradycardia, normal rhythm or tachycardia.
      */
     public String evaluateHeartRate(String patientName, int beatsPerMinute) {
         String result = "normal rhythm";
@@ -89,16 +76,45 @@ public class Cardiologist extends HealthProfessional implements Prescribable, Di
         return getName() + ": " + patientName + " at " + beatsPerMinute + " bpm shows " + result + ".";
     }
 
+    // Prescribes cardiac medication after validating text inputs
     @Override
     public String prescribe(String patientName, String medication) {
-        return getName() + " (Cardiologist) prescribed " + medication + " to " + patientName + ".";
+        return getName() + " (Cardiologist) prescribed " + requireText(medication, "Medication")
+                + " to " + requireText(patientName, "Patient name") + ".";
     }
 
+    // Cardiologists may prescribe specialist-restricted cardiac medications
+    @Override
+    public boolean canPrescribeRestrictedMedication() {
+        return true;
+    }
+
+    // Returns the 90-day long-term cardiac therapy supply limit
+    @Override
+    public int getMaxSupplyDays() {
+        return DEFAULT_CARDIAC_SUPPLY_DAYS;
+    }
+
+    // Performs a cardiac diagnostic test using diagnosticDevice
     @Override
     public String performDiagnostic(String patientName) {
-        return getName() + " (Cardiologist) ran a " + diagnosticDevice + " test on " + patientName + ".";
+        return getName() + " (Cardiologist) ran a " + diagnosticDevice + " test on "
+                + requireText(patientName, "Patient name") + ".";
     }
 
+    // Returns the diagnostic device name
+    @Override
+    public String getDiagnosticEquipment() {
+        return diagnosticDevice;
+    }
+
+    // Returns 30 minutes for urgent cardiac tests or 90 minutes for routine tests
+    @Override
+    public int estimateTurnaroundMinutes(boolean isUrgent) {
+        return isUrgent ? URGENT_TURNAROUND_MINUTES : 90;
+    }
+
+    // Appends sub-specialty and device fields to the base clinician summary
     @Override
     public String toString() {
         return super.toString()
