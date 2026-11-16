@@ -1,28 +1,28 @@
+/*
+ * File: AppointmentManager.java
+ * Central clinic coordinator for staff rosters, booking rules and orders.
+ */
 import java.util.ArrayList;
 import java.util.Collections;
 
 /**
- * Keeps the clinic's staff and all of today's appointments in one place.
- * Patients can only see and cancel their own bookings; the clinic view can
- * filter, sort and cancel any booking.
- *
- * @author kwu
- * @version 3.0
+ * Manages clinic staff, daily time slots, bookings, filtering, sorting,
+ * cancellation and capability-based clinical orders.
  */
 public class AppointmentManager {
+
+    public static final int DEFAULT_OPEN_HOUR = 8;
+    public static final int DEFAULT_CLOSE_HOUR = 16;
+    public static final int DEFAULT_SLOT_INTERVAL = 30;
 
     private String clinicName;
     private String[] timeSlots;
     private ArrayList<HealthProfessional> staff = new ArrayList<>();
     private ArrayList<Appointment> appointments = new ArrayList<>();
 
-    /**
-     * Creates a clinic with custom opening hours.
-     *
-     * @param clinicName      the clinic's name
-     * @param openHour        first slot hour, e.g. 8
-     * @param closeHour       last slot hour, e.g. 16
-     * @param intervalMinutes minutes between slots, e.g. 30
+    /*
+     * Creates a clinic manager with custom opening hours and slot interval
+     * after validating non-blank clinicName.
      */
     public AppointmentManager(String clinicName, int openHour, int closeHour, int intervalMinutes) {
         if (clinicName == null || clinicName.trim().isEmpty()) {
@@ -32,23 +32,14 @@ public class AppointmentManager {
         this.timeSlots = generateTimeSlots(openHour, closeHour, intervalMinutes);
     }
 
-    /**
-     * Creates a clinic open 08:00 to 16:00 in 30-minute slots.
-     *
-     * @param clinicName the clinic's name
-     */
+    // Creates a clinic open 08:00 to 16:00 using standard 30-minute slots
     public AppointmentManager(String clinicName) {
-        this(clinicName, 8, 16, 30);
+        this(clinicName, DEFAULT_OPEN_HOUR, DEFAULT_CLOSE_HOUR, DEFAULT_SLOT_INTERVAL);
     }
 
-    /**
-     * Builds the fixed list of daily slots. The hours are parameters, so the
-     * clinic can change its schedule without touching any booking logic.
-     *
-     * @param openHour        first slot hour
-     * @param closeHour       last slot hour
-     * @param intervalMinutes minutes between slots
-     * @return the slots in "HH:mm" format, earliest first
+    /*
+     * Generates the fixed clinic schedule from open/close/interval parameters
+     * so changing clinic hours requires no changes to booking validation logic.
      */
     public static String[] generateTimeSlots(int openHour, int closeHour, int intervalMinutes) {
         if (openHour < 0 || closeHour > 23 || openHour >= closeHour || intervalMinutes <= 0) {
@@ -63,12 +54,12 @@ public class AppointmentManager {
         return slots;
     }
 
-    /** @return the clinic's name */
+    // Returns the clinic name
     public String getClinicName() {
         return clinicName;
     }
 
-    /** @return a copy of the daily time slots */
+    // Returns a defensive copy of the clinic's daily time slots
     public String[] getTimeSlots() {
         String[] copy = new String[timeSlots.length];
         for (int i = 0; i < timeSlots.length; i++) {
@@ -77,21 +68,19 @@ public class AppointmentManager {
         return copy;
     }
 
-    /** @return the number of booked appointments */
+    // Returns the current number of active appointments
     public int getAppointmentCount() {
         return appointments.size();
     }
 
-    /** @return a copy of the staff list */
+    // Returns a defensive shallow copy of the registered staff roster
     public ArrayList<HealthProfessional> getStaff() {
         return new ArrayList<>(staff);
     }
 
-    /**
-     * Adds a professional to the staff list.
-     *
-     * @param professional the professional to add
-     * @return true if added, false if null or the ID is already used
+    /*
+     * Adds a health professional to the clinic roster if non-null and not
+     * already present by staff ID.
      */
     public boolean registerProfessional(HealthProfessional professional) {
         if (professional == null || staff.contains(professional)) {
@@ -102,12 +91,7 @@ public class AppointmentManager {
         return true;
     }
 
-    /**
-     * Finds a professional by staff ID.
-     *
-     * @param id the staff ID
-     * @return the professional, or null if not found
-     */
+    // Searches the staff roster by numeric staff ID
     public HealthProfessional findProfessionalById(int id) {
         for (HealthProfessional professional : staff) {
             if (professional.getId() == id) {
@@ -117,13 +101,7 @@ public class AppointmentManager {
         return null;
     }
 
-    /**
-     * Finds a patient who already has a booking, so a returning patient keeps
-     * their existing record.
-     *
-     * @param phone the mobile number
-     * @return the existing patient, or null if none
-     */
+    // Reuses an existing Patient record matched by mobile number so prior bookings stay linked
     public Patient findPatientByPhone(String phone) {
         for (Appointment appointment : appointments) {
             if (appointment.getPatient().getMobilePhone().equals(phone)) {
@@ -133,12 +111,7 @@ public class AppointmentManager {
         return null;
     }
 
-    /**
-     * Checks whether a slot is part of the clinic's daily schedule.
-     *
-     * @param timeSlot the slot to check
-     * @return true if it is one of the clinic's slots
-     */
+    // Checks whether a slot matches any entry in the clinic's daily schedule
     public boolean isClinicTimeSlot(String timeSlot) {
         for (String slot : timeSlots) {
             if (slot.equals(timeSlot)) {
@@ -148,13 +121,7 @@ public class AppointmentManager {
         return false;
     }
 
-    /**
-     * Checks whether a professional already has a booking at a slot.
-     *
-     * @param professional the professional
-     * @param timeSlot     the slot
-     * @return true if already booked
-     */
+    // Returns true if the given professional already holds a booking at timeSlot
     public boolean isBooked(HealthProfessional professional, String timeSlot) {
         for (Appointment appointment : appointments) {
             // equals() compares staff IDs, so two objects for the same person still clash
@@ -166,12 +133,7 @@ public class AppointmentManager {
         return false;
     }
 
-    /**
-     * Lists the slots a professional can still be booked for today.
-     *
-     * @param professional the professional
-     * @return free slots inside their shift
-     */
+    // Collects all daily clinic slots that are inside the clinician's shift and unbooked
     public ArrayList<String> getFreeSlots(HealthProfessional professional) {
         ArrayList<String> free = new ArrayList<>();
         for (String slot : timeSlots) {
@@ -182,7 +144,7 @@ public class AppointmentManager {
         return free;
     }
 
-    /** Prints every professional, one field per line, with their free slots. */
+    // Prints every registered professional along with today's free booking slots
     public void displayDoctorList() {
         Display.header(clinicName + " - Health Professionals (" + staff.size() + ")");
         for (HealthProfessional professional : staff) {
@@ -192,13 +154,9 @@ public class AppointmentManager {
         }
     }
 
-    /**
-     * Books an appointment after checking every rule.
-     *
-     * @param patient      the patient
-     * @param professional any kind of health professional
-     * @param timeSlot     the requested slot
-     * @return true if booked, false (with a warning) if any rule fails
+    /*
+     * Validates non-null references, clinic schedule membership, clinician
+     * shift hours and double-booking before adding an appointment.
      */
     public boolean addAppointment(Patient patient, HealthProfessional professional, String timeSlot) {
         String warning = null;
@@ -227,12 +185,7 @@ public class AppointmentManager {
         return true;
     }
 
-    /**
-     * Returns the appointments of one professional.
-     *
-     * @param professionalId the staff ID
-     * @return matching appointments, in booking order
-     */
+    // Filters active appointments by clinician staff ID
     public ArrayList<Appointment> filterByProfessionalId(int professionalId) {
         ArrayList<Appointment> result = new ArrayList<>();
         for (Appointment appointment : appointments) {
@@ -243,12 +196,7 @@ public class AppointmentManager {
         return result;
     }
 
-    /**
-     * Returns the appointments of one patient.
-     *
-     * @param phone the patient's mobile number
-     * @return matching appointments, in booking order
-     */
+    // Filters active appointments by patient mobile phone number
     public ArrayList<Appointment> filterByPatientPhone(String phone) {
         ArrayList<Appointment> result = new ArrayList<>();
         for (Appointment appointment : appointments) {
@@ -259,30 +207,19 @@ public class AppointmentManager {
         return result;
     }
 
-    /**
-     * Returns a sorted copy, earliest first. Works for all appointments or
-     * for any filtered subset.
-     *
-     * @param list the appointments to sort
-     * @return a new sorted list
-     */
+    // Returns a chronologically sorted copy using Appointment.compareTo
     public ArrayList<Appointment> sortByTime(ArrayList<Appointment> list) {
         ArrayList<Appointment> sorted = new ArrayList<>(list);
         Collections.sort(sorted);
         return sorted;
     }
 
-    /** @return a copy of all appointments, in booking order */
+    // Returns a copy of all active appointments in insertion order
     public ArrayList<Appointment> getAllAppointments() {
         return new ArrayList<>(appointments);
     }
 
-    /**
-     * Prints a list of appointments under a heading.
-     *
-     * @param title the heading
-     * @param list  the appointments to print
-     */
+    // Prints a formatted list of appointments or a warning when none match
     public void printAppointments(String title, ArrayList<Appointment> list) {
         if (list.isEmpty()) {
             System.out.println("[WARNING] No appointments found: " + title + ".");
@@ -295,22 +232,15 @@ public class AppointmentManager {
         }
     }
 
-    /**
-     * Prints only the current patient's appointments, earliest first.
-     *
-     * @param patient the logged-in patient
-     */
+    // Displays only the logged-in patient's appointments sorted chronologically
     public void displayMyAppointments(Patient patient) {
         printAppointments("My appointments - " + patient.getName(),
                 sortByTime(filterByPatientPhone(patient.getMobilePhone())));
     }
 
-    /**
-     * Cancels one of the current patient's own appointments.
-     *
-     * @param patient the logged-in patient
-     * @param key     the appointment ID or time slot
-     * @return true if cancelled
+    /*
+     * Cancels one booking belonging exclusively to the given patient, matching
+     * by appointment ID or time slot to enforce patient data isolation.
      */
     public boolean cancelMyAppointment(Patient patient, String key) {
         for (int i = 0; i < appointments.size(); i++) {
@@ -327,12 +257,9 @@ public class AppointmentManager {
         return false;
     }
 
-    /**
-     * Cancels the appointment of a professional at a time (clinic view).
-     *
-     * @param professionalId the staff ID
-     * @param timeSlot       the time slot
-     * @return true if cancelled
+    /*
+     * Cancels the appointment matching both staff ID and time slot from the
+     * clinic management view.
      */
     public boolean cancelAppointment(int professionalId, String timeSlot) {
         for (int i = 0; i < appointments.size(); i++) {
@@ -348,15 +275,13 @@ public class AppointmentManager {
         return false;
     }
 
-    /**
-     * Cancels every appointment of a patient (clinic view).
-     *
-     * @param phone the patient's mobile number
-     * @return true if at least one was cancelled
+    /*
+     * Cancels every appointment matching a patient mobile number using reverse
+     * iteration so removals do not skip adjacent items.
      */
     public boolean cancelAppointment(String phone) {
         boolean cancelled = false;
-        // Walk backwards so removing an item does not skip the next one
+        // Walk backwards so removing an item does not skip the next element
         for (int i = appointments.size() - 1; i >= 0; i--) {
             if (appointments.get(i).getPatient().getMobilePhone().equals(phone)) {
                 removeAt(i);
@@ -369,11 +294,42 @@ public class AppointmentManager {
         return cancelled;
     }
 
+    // Removes an appointment at index, unlinks it from the patient, and logs confirmation
     private void removeAt(int index) {
         Appointment removed = appointments.remove(index);
         removed.getPatient().removeAppointment(removed);
         System.out.println("[SUCCESS] Cancelled " + removed.getAppointmentId() + " at "
                 + removed.getTimeSlot() + ": " + removed.getPatient().getName()
                 + " with " + removed.getHealthProfessional().getName() + ".");
+    }
+
+    /*
+     * Records a medication prescription against any Prescribable professional
+     * and appends restricted-schedule status, supply days and default repeats.
+     */
+    public String recordPrescription(Prescribable prescriber, String patientName, String medication) {
+        if (prescriber == null) {
+            throw new IllegalArgumentException("Prescriber cannot be null.");
+        }
+        return prescriber.prescribe(patientName, medication)
+                + String.format(" [Restricted-schedule eligible: %s | Max supply: %d days | Default repeats: %d]",
+                        prescriber.canPrescribeRestrictedMedication() ? "Yes" : "No",
+                        prescriber.getMaxSupplyDays(),
+                        Prescribable.DEFAULT_REPEAT_COUNT);
+    }
+
+    /*
+     * Records a diagnostic order against any DiagnosticCapable professional and
+     * appends equipment details, priority label and estimated turnaround time.
+     */
+    public String recordDiagnosticOrder(DiagnosticCapable diagnostician, String patientName, boolean isUrgent) {
+        if (diagnostician == null) {
+            throw new IllegalArgumentException("Diagnostician cannot be null.");
+        }
+        return diagnostician.performDiagnostic(patientName)
+                + String.format(" [Equipment: %s | Priority: %s | Est. turnaround: %d mins]",
+                        diagnostician.getDiagnosticEquipment(),
+                        isUrgent ? "URGENT" : "ROUTINE",
+                        diagnostician.estimateTurnaroundMinutes(isUrgent));
     }
 }

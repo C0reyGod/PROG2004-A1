@@ -1,16 +1,11 @@
+/*
+ * File: Appointment.java
+ * Models an immutable same-day booking linking a patient and a clinician.
+ */
 import java.util.Objects;
 
 /**
- * One appointment today: a patient, a health professional and a time slot.
- * <p>
- * There is deliberately no no-argument constructor and no setters: an
- * appointment must never exist in an incomplete state, and changing the
- * professional or time after booking would bypass the double-booking check.
- * To reschedule, cancel and book again through {@link AppointmentManager}.
- * </p>
- *
- * @author kwu
- * @version 3.0
+ * One appointment linking a patient, a health professional and a time slot.
  */
 public class Appointment implements Comparable<Appointment> {
 
@@ -18,21 +13,19 @@ public class Appointment implements Comparable<Appointment> {
 
     private static int nextNumber = 1001;
 
-    private final String appointmentId;
-    private final Patient patient;
-    private final HealthProfessional healthProfessional;
-    private final String appointmentDate;
-    private final String timeSlot;
+    /*
+     * No no-argument constructor or setters: an appointment must stay complete,
+     * and editing doctor or time after booking would bypass double-booking checks.
+     */
+    private String appointmentId;
+    private Patient patient;
+    private HealthProfessional healthProfessional;
+    private String appointmentDate;
+    private String timeSlot;
 
-    /**
-     * Creates an appointment with every detail specified.
-     *
-     * @param appointmentId      unique ID, e.g. "APT-1001"
-     * @param patient            the patient
-     * @param healthProfessional any kind of health professional
-     * @param appointmentDate    the date
-     * @param timeSlot           the time, "HH:mm"
-     * @throws IllegalArgumentException if any detail is missing or invalid
+    /*
+     * Creates a complete appointment after verifying ID, linked patient and
+     * health professional objects, date string and "HH:mm" time format.
      */
     public Appointment(String appointmentId, Patient patient, HealthProfessional healthProfessional,
                        String appointmentDate, String timeSlot) {
@@ -55,22 +48,14 @@ public class Appointment implements Comparable<Appointment> {
         this.timeSlot = timeSlot;
     }
 
-    /**
-     * Creates an appointment for today with the next available ID.
-     *
-     * @param patient            the patient
-     * @param healthProfessional any kind of health professional
-     * @param timeSlot           the time, "HH:mm"
-     */
+    // Auto-generates a sequential booking ID for today's appointments
     public Appointment(Patient patient, HealthProfessional healthProfessional, String timeSlot) {
         this("APT-" + nextNumber++, patient, healthProfessional, TODAY, timeSlot);
     }
 
-    /**
-     * Checks that a time is written as a valid 24-hour "HH:mm".
-     *
-     * @param time the text to check
-     * @return true if valid
+    /*
+     * Validates strict 24-hour "HH:mm" formatting: exact length 5, colon at
+     * index 2, hour 00-23 and minute 00-59.
      */
     public static boolean isValidTimeFormat(String time) {
         if (time == null || time.length() != 5 || time.charAt(2) != ':') {
@@ -85,43 +70,43 @@ public class Appointment implements Comparable<Appointment> {
         }
     }
 
-    /** @return the appointment ID */
+    // Returns the unique booking ID
     public String getAppointmentId() {
         return appointmentId;
     }
 
-    /** @return the patient */
+    // Returns the booked Patient
     public Patient getPatient() {
         return patient;
     }
 
-    /** @return the health professional */
+    // Returns the assigned HealthProfessional
     public HealthProfessional getHealthProfessional() {
         return healthProfessional;
     }
 
-    /** @return the date */
+    // Returns the booking date string
     public String getAppointmentDate() {
         return appointmentDate;
     }
 
-    /** @return the time slot */
+    // Returns the scheduled "HH:mm" slot
     public String getTimeSlot() {
         return timeSlot;
     }
 
-    /** Prints every field of this appointment, one per line. */
+    // Prints full appointment, patient and clinician details to the console
     public void displayAppointmentInfo() {
         System.out.print(this);
     }
 
-    /** Orders appointments from earliest to latest time. */
+    // "HH:mm" is zero-padded, so alphabetical order matches chronological order
     @Override
     public int compareTo(Appointment other) {
-        // "HH:mm" is zero-padded, so alphabetical order is also time order
         return timeSlot.compareTo(other.timeSlot);
     }
 
+    // Combines appointment header fields with composed patient and clinician info
     @Override
     public String toString() {
         return Display.field("Appointment ID", appointmentId)
@@ -131,7 +116,7 @@ public class Appointment implements Comparable<Appointment> {
                 + "  [Health Professional]\n" + healthProfessional;
     }
 
-    /** Two appointments clash if they book the same professional at the same time. */
+    // Two appointments clash if they book the same professional at the same slot
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -144,6 +129,7 @@ public class Appointment implements Comparable<Appointment> {
         return timeSlot.equals(other.timeSlot) && healthProfessional.equals(other.healthProfessional);
     }
 
+    // Hashes on timeSlot and healthProfessional to match equals()
     @Override
     public int hashCode() {
         return Objects.hash(timeSlot, healthProfessional);
